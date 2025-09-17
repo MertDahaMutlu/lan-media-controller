@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LAN Media Controller</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <h1>LAN Media Controller</h1>
+    <div class="note">Site link saved into trol/link.txt (folder is hidden)</div>
+  </header>
+
+  <section class="card">
+    <h2>Photo / Video Box</h2>
+    <div class="row">
+      <input id="mediaFile" type="file" accept="image/*,video/*">
+      <label>Image secs (1-5):</label>
+      <input id="imgSecs" type="range" min="1" max="5" value="1">
+      <span id="imgSecsVal">1s</span>
+      <label>Video % (0-100):</label>
+      <input id="vidPercent" type="range" min="0" max="100" value="100">
+      <span id="vidPercentVal">100%</span>
+      <button id="mediaOpen" class="btn">Open Media</button>
+      <button id="mediaSubmit" class="btn">Submit</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Audio / Video-as-audio Box</h2>
+    <div class="row">
+      <input id="audioFile" type="file" accept="audio/*,video/mp4">
+      <label>Audio % (0-100):</label>
+      <input id="audPercent" type="range" min="0" max="100" value="100">
+      <span id="audPercentVal">100%</span>
+      <button id="audioOpen" class="btn">Open Media</button>
+      <button id="audioSubmit" class="btn">Submit</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>URL</h2>
+    <div class="row">
+      <input id="urlInput" type="text" placeholder="Enter URL to open on host">
+      <button id="urlSubmit" class="btn">Submit</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <button id="clearAll" class="clearbtn">Clear (stop & remove all)</button>
+    </div>
+  </section>
+
+  <footer class="footer">Use "Open Media" to open file via host default player. Use "Submit" to run host-behavior (fullscreen picture/video or background audio).</footer>
+</div>
+
+<script>
+function el(id){return document.getElementById(id);}
+function sendForm(fd){
+  return fetch('/upload',{method:'POST', body: fd}).then(r=>r.json());
+}
+
+el('imgSecs').addEventListener('input', e=> el('imgSecsVal').textContent = e.target.value + 's');
+el('vidPercent').addEventListener('input', e=> el('vidPercentVal').textContent = e.target.value + '%');
+el('audPercent').addEventListener('input', e=> el('audPercentVal').textContent = e.target.value + '%');
+
+/* Media Open */
+el('mediaOpen').addEventListener('click', ()=>{
+  const f = el('mediaFile').files[0];
+  if(!f) return alert('Select a media file');
+  const fd = new FormData(); fd.append('file', f); fd.append('mode','gallery'); fd.append('box','image');
+  sendForm(fd).then(j=>alert(j.status||'ok')).catch(()=>alert('error'));
+});
+
+/* Media Submit */
+el('mediaSubmit').addEventListener('click', ()=>{
+  const f = el('mediaFile').files[0];
+  if(!f) return alert('Select a media file');
+  const fd = new FormData(); fd.append('file', f); fd.append('mode','submit'); fd.append('box','image');
+  fd.append('image_secs', el('imgSecs').value);
+  fd.append('percent', el('vidPercent').value);
+  sendForm(fd).then(j=>alert(j.status||'ok')).catch(()=>alert('error'));
+});
+
+/* Audio Open */
+el('audioOpen').addEventListener('click', ()=>{
+  const f = el('audioFile').files[0];
+  if(!f) return alert('Select an audio or mp4 file');
+  const fd = new FormData(); fd.append('file', f); fd.append('mode','gallery'); fd.append('box','audio');
+  sendForm(fd).then(j=>alert(j.status||'ok')).catch(()=>alert('error'));
+});
+
+/* Audio Submit */
+el('audioSubmit').addEventListener('click', ()=>{
+  const f = el('audioFile').files[0];
+  if(!f) return alert('Select an audio or mp4 file');
+  const fd = new FormData(); fd.append('file', f); fd.append('mode','submit'); fd.append('box','audio');
+  fd.append('percent', el('audPercent').value);
+  sendForm(fd).then(j=>alert(j.status||'ok')).catch(()=>alert('error'));
+});
+
+/* URL Submit */
+el('urlSubmit').addEventListener('click', ()=>{
+  const url = el('urlInput').value.trim();
+  if(!url) return alert('Enter URL');
+  const fd = new FormData(); fd.append('mode','submit'); fd.append('box','link'); fd.append('url', url);
+  sendForm(fd).then(j=>alert(j.status||'ok')).catch(()=>alert('error'));
+});
+
+/* Clear All */
+el('clearAll').addEventListener('click', ()=>{
+  if(!confirm('Clear all temp files and stop playing?')) return;
+  fetch('/clear', {method:'POST'}).then(r=>r.json()).then(j=>alert(j.status)).catch(()=>alert('error'));
+});
+</script>
+</body>
+</html>
